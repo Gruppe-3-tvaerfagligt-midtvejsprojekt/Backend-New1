@@ -1,23 +1,23 @@
+require("dotenv").config();
+
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
 
 const app = express();
-app.use(express.json());
-
-const port = 3000;
 
 app.use(express.json());
 app.use(cors());
 
-//Host, user, password database
+const port = 3000;
+
 const connection = mysql.createConnection({
-    //process.env.KEYWORD
-    host: "localhost",
-    user: "root",
-    password: "REMOVED_SECRET",
-    database: "pokemon"
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 });
+
 
 
 app.get('/trainers', (req, res) =>{
@@ -65,6 +65,13 @@ app.post("/trainer/pokemon/new", (req, res) => {
         });
 });
 
+
+app.get('/trainer/:trainer_name', (req,res) =>{
+const trainerName = req.params.trainer_name;
+connection.query("SELECT * FROM trainer where trainer.trainer_name=?", [trainerName], (error, results) => {
+    res.send(results)
+});
+});
 
 app.listen(port, () =>{
     console.log(`Application is now running on port ${port}`);
