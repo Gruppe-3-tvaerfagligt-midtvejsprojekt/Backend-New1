@@ -22,7 +22,7 @@ const connection = mysql.createConnection({
 
 app.get('/trainers', (req, res) =>{
     connection.query("SELECT * FROM trainer", (error, results) => {
-res.send(results)
+        res.send(results)
     });
 
 })
@@ -65,13 +65,14 @@ app.post("/trainer/pokemon/new", (req, res) => {
         });
 });
 
-
 app.get('/trainer/:trainer_name', (req,res) =>{
-const trainerName = req.params.trainer_name;
-connection.query("SELECT * FROM trainer where trainer.trainer_name=?", [trainerName], (error, results) => {
-    res.send(results)
+    const trainerName = req.params.trainer_name;
+    connection.query("SELECT * FROM trainer where trainer.trainer_name=?", [trainerName], (error, results) => {
+        res.send(results)
+    });
+
 });
-});
+
 
 app.listen(port, () =>{
     console.log(`Application is now running on port ${port}`);
