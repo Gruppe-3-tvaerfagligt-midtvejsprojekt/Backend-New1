@@ -73,6 +73,124 @@ app.get('/trainer/:trainer_name', (req,res) =>{
 
 });
 
+app.get("/pokemon", (req, res) => {
+
+    let sql = "SELECT * FROM pokemon WHERE 1=1";
+    let values = [];
+
+    if (req.query.type) {
+        sql += " AND primary_type = ?";
+        values.push(req.query.type);
+    }
+
+    if (req.query.name) {
+        sql += " AND name LIKE ?";
+        values.push("%" + req.query.name + "%");
+    }
+
+    if (req.query.minAttack) {
+        sql += " AND attack >= ?";
+        values.push(req.query.minAttack);
+    }
+
+
+    connection.query(sql, values, (error, results) => {
+        if (error) {
+            return res.status(500).send(error.message);
+        }
+
+        res.json(results);
+    });
+});
+
+
+app.get("/evolutions", (req, res) => {
+
+    const sql = `
+        SELECT
+            before_evolution.pokedex_number AS from_number,
+            before_evolution.name AS from_pokemon,
+            after_evolution.pokedex_number AS to_number,
+            after_evolution.name AS to_pokemon
+
+        FROM evolution
+
+        JOIN pokemon AS before_evolution
+            ON evolution.from_pokedex_number = before_evolution.pokedex_number
+
+        JOIN pokemon AS after_evolution
+            ON evolution.to_pokedex_number = after_evolution.pokedex_number
+    `;
+
+    connection.query(sql, (error, results) => {
+        if (error) {
+            return res.status(500).send(error.message);
+        }
+
+        res.json(results);
+    });
+});
+
+app.get('/stats/type-distribution', (req, res) => {
+    const sql = `
+        SELECT
+            primary_type AS type,
+            COUNT(*) AS antal
+        FROM pokemon
+        GROUP BY primary_type
+        ORDER BY antal DESC
+    `;
+
+    connection.query(sql, (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.json(results);
+    });
+});
+
+
+app.get('/stats/average-attack', (req, res) => {
+    const sql = `
+        SELECT
+            primary_type AS type,
+            ROUND(AVG(attack), 2) AS gennemsnitlig_attack
+        FROM pokemon
+        GROUP BY primary_type
+        ORDER BY gennemsnitlig_attack DESC
+    `;
+
+    connection.query(sql, (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.json(results);
+    });
+});
+app.get('/stats/top-trainers', (req, res) => {
+    const sql = `
+        SELECT
+            trainer.trainer_id,
+            trainer.trainer_name,
+            COUNT(trainer_pokemon.trainer_id) AS antal_pokemon
+        FROM trainer
+                 LEFT JOIN trainer_pokemon
+                           ON trainer.trainer_id = trainer_pokemon.trainer_id
+        GROUP BY trainer.trainer_id, trainer.trainer_name
+        ORDER BY antal_pokemon DESC
+    `;
+
+    connection.query(sql, (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.json(results);
+    });
+});
+
 
 app.listen(port, () =>{
     console.log(`Application is now running on port ${port}`);
