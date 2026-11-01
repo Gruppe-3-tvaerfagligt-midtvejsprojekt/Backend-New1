@@ -19,13 +19,14 @@ const connection = mysql.createConnection({
 });
 
 
-
+//Alle trainers
 app.get('/trainers', (req, res) =>{
     connection.query("SELECT * FROM trainer", (error, results) => {
         res.send(results)
     });
 
 })
+//Søge på en træners id
 app.get('/trainerpokemon/:trainer_id', (req,res) =>{
     const trainerId = req.params.trainer_id;
     connection.query("SELECT * FROM trainer_pokemon inner join trainer on trainer_pokemon.trainer_id=trainer.trainer_id inner join pokemon on trainer_pokemon.pokedex_number=pokemon.pokedex_number WHERE trainer.trainer_id=?", [trainerId], (error, results) => {
@@ -33,6 +34,7 @@ app.get('/trainerpokemon/:trainer_id', (req,res) =>{
     });
 });
 
+//Oprette en ny træner
 app.post('/new/trainer', (req, res) =>{
     const trainer_name = req.body.trainer_name
     const hometown = req.body.hometown
@@ -49,6 +51,7 @@ app.post('/new/trainer', (req, res) =>{
         })
 });
 
+//Tilføje en allerede eksisterende pokemon, til en træner.
 app.post("/trainer/pokemon/new", (req, res) => {
     const trainerId = req.body.trainer_id;
     const pokedexNumber = req.body.pokedex_number;
@@ -65,9 +68,11 @@ app.post("/trainer/pokemon/new", (req, res) => {
         });
 });
 
+//Søge på en træners navn
 app.get('/trainer/:trainer_name', (req,res) =>{
     const trainerName = req.params.trainer_name;
-    connection.query("SELECT * FROM trainer where trainer.trainer_name=?", [trainerName], (error, results) => {
+    connection.query('SELECT * FROM trainer WHERE trainer.trainer_name LIKE ?',
+        [`%${trainerName}%`], (error, results) => {
         res.send(results)
     });
 
@@ -189,6 +194,28 @@ app.get('/stats/top-trainers', (req, res) => {
 
         res.json(results);
     });
+});
+
+app.get("/stats/fastest-pokemon", (req, res) => {
+    const sql = `
+       SELECT name, speed
+       FROM pokemon
+       WHERE speed IS NOT NULL
+       ORDER BY speed DESC, name ASC
+       LIMIT 10
+   `;
+
+    connection.query(sql, (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.json(results);
+    });
+});
+
+app.listen(port, () =>{
+    console.log(`Application is now running on port ${port}`);
 });
 
 
